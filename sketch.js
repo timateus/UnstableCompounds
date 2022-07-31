@@ -32,7 +32,7 @@ function draw() {
   background('#00376A');
   // background(0);
   
-  image(imgMap, -0, -0);
+  image(imgMap, -0, -0, 1000, 1000);
   image(img, -0, -200);
   
   fill(0);
