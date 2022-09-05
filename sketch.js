@@ -1,65 +1,146 @@
 
 let xspacing = 10; // Distance between each horizontal location
-let w; // Width of entire wave
-let theta = 0.0; // Start angle at 0
+const waveLenPx = 300; // wave len in pixels 
+
+let w = waveLenPx; // Width of entire wave
 let amplitude = 150.0; // Height of wave
 let period = 500.0; // How many pixels before the wave repeats
-let dx; // Value for incrementing x
-let yvalues; // Using an array to store height values for the wave
+let periods = 2;
+
 let noiseVal;
+let angularSpeed = 0.1; // speed of wave
+
+let modFreq1;
+let modFreq2;
+let amp1;
+let amp2;
+
+const vals = [];
+
 
 const oscImg = 'osc2.png'
 let img;
 const mapImgPath = 'map.png'
 let imgMap;
+const planeImgPath = 'plane.png'
+let imgPlane;
 
 function preload() {
   img = loadImage(oscImg);
   imgMap = loadImage(mapImgPath);
+  imgPlane = loadImage(planeImgPath);
 }
 
 function setup() {
-  createCanvas(1000, 1000);
-  w = 300 + 16;
-  dx = (TWO_PI / period) * xspacing;
-  yvalues = new Array(floor(w / xspacing));
-  slider = createSlider(-300, 300, 0, 1);
+  createCanvas(800, 800);
+  
+  imgMap.loadPixels();
+}
+
+const renderOscilloscope = () => {
+  image(img, -45, -262);
+  fill(30);
+  rect(20, 40, 505, 300);
+}
+
+const renderScreen = () => {
+  let modFreq = map(mouseY, height, 0, 0, 1);
+  let modFreq2 = map(mouseX, height, 0, 0, 1);
+  // console.log(modFreq);
+
+  const vals = calcWave(sin, modFreq, amp1);
+  const valsCos = calcWave(cos, modFreq2, amp2);
+  renderWave(vals, 8);
+  renderWave(valsCos, 8);
+  push()
+  translate(-300,0)
+  renderWaveParametric(vals, valsCos, 8);  
+  pop()
+  // renderWaveParametric(vals, valsCos);  
+}
+
+
+const renderTarget = () => {
+  let x = map(
+    noise(frameCount * 0.0005), 0, 1, 100, 1000
+  );
+  let y = map(
+    noise(frameCount * 0.0004), 0, 1, 100, 600
+  );
+  
+  
+//   let modFreq = map(mouseY, height, 0, 0, 1);
+//   let modFreq2 = map(mouseX, height, 0, 0, 1);
+//   // console.log(modFreq);
+
+//   const vals = calcWave(sin, modFreq, amp1);
+//   const valsCos = calcWave(cos, modFreq2, amp2);
+
+//   push()
+//   translate(x - width / 8, y - height / 8)
+//   scale(0.25)  
+//   pop()
+  
+  fill(255)
+  noStroke()
+  
+  
+  
+  imgPlane.resize(50, 0);
+  image(imgPlane, x -25, y - 25);
+
+  // ellipse(x, y, 10, 10);
+  return [round(x),y]
 }
 
 function draw() {
-  noiseVal = slider.value();
-  noiseVal = map(noise(frameCount / 100),0, 1, -200, 200);
-  background('#00376A');
-  // background(0);
+  noiseVal = map(noise(frameCount / 100),0, 1, -50, 50);
   
-  image(imgMap, -0, -0, 1000, 1000);
-  image(img, -0, -200);
+  background(0)
+  push()
+  scale(0.70)
+  image(imgMap, 90, 90);
+  pop()
   
-  fill(0);
-  rect(80, 100, 480, 300);
+  let tarVals = renderTarget();
+  // console.log(tarVals[0])
+  // console.log(imgMap.pixels[4 * tarVals[0]])
+  let resVal = imgMap.pixels[4 * tarVals[0]];
+  let resVal2 = imgMap.pixels[2 * tarVals[0]];  
+  amp1 = map(resVal, 0, 255, 10, 300);
+  amp2 = resVal2;
+  // amp2 = map(resVal2, 0, 255, 10, 300);
+  // console.log(amp1, amp2)
+  // angularSpeed = map(resVal2, 0, 255, 0.001, 0.1)
+  
+  push()
+  translate(width * 0.665, 60 )
   scale(0.5)
-  translate(150,0,0)
-  if(noise(round(frameCount / 5)) < 0.2) {
-    
-  }
-  else {
-  
-    let modFreq = map(mouseY, height, 0, 0, 1);
-    let modFreq2 = map(mouseX, height, 0, 0, 1);
-    // console.log(modFreq);
+  renderOscilloscope()
+  pop()
 
-    const vals = calcWave(sin, modFreq);
-    const valsCos = calcWave(cos, modFreq2);
-    renderWave(vals);
-    renderWave(valsCos);
-    renderWaveParametric(vals, valsCos);
+  push()
+  translate(width * 0.7, 70 )
+  scale(0.2)
+  renderScreen()
+  pop()
+  
+
+  
+  // makie it blink  
+  if(noise(round(frameCount / 5)) < 0.2) {
+    return
   }
+    
+
+
 }
 
-function calcWave(func, freq) {
+function calcWave(func, freq, amplitude) {
   // Increment theta (try different values for
   // 'angular velocity' here)
-  theta += 0.01;
+  theta = frameCount * angularSpeed;
+  const dx = (periods * PI / period) * xspacing; // Value for incrementing x
   const vals = new Array(floor(w * 3 / xspacing));
 
   // For every x value, calculate a y value with sine function
@@ -67,28 +148,28 @@ function calcWave(func, freq) {
   for (let i = 0; i < vals.length; i++) {
     vals[i] = 
       func(freq * x) * amplitude +
-      map(noise(frameCount/100, i), 0,1,-noiseVal,noiseVal) ;
+      map(noise(frameCount/1000, i), 0,1,-noiseVal,noiseVal) ;
     x += dx;
   }
   
   return vals;
 }
 
-function renderWave(values) {
+function renderWave(values, size=4) {
   noStroke();
   fill(255);
   // A simple way to draw the wave with an ellipse at each location
   for (let x = 0; x < values.length; x++) {
-    ellipse(x * xspacing, height / 2 + values[x], 4, 4);
+    ellipse(x * xspacing, height / 2 + values[x], size, size);
   }
 }
 
 
-const renderWaveParametric = (x, y) => {
+const renderWaveParametric = (x, y, dotSize=6) => {
   noStroke();
   fill('#01AFA6');
   // A simple way to draw the wave with an ellipse at each location
   for (let i = 0; i < x.length; i++) {
-    ellipse(width / 2 + x[i], height / 2 + y[i], 6, 6);
+    ellipse(width / 2 + x[i], height / 2 + y[i], dotSize, dotSize);
   }
 }
