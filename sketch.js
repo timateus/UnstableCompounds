@@ -14,13 +14,16 @@ let modFreq1;
 let modFreq2;
 let amp1;
 let amp2;
+let amp3;
 
 const vals = [];
+
+let vid;
 
 
 const oscImg = 'osc2.png'
 let img;
-const mapImgPath = 'map.png'
+const mapImgPath = 'photo.jpg'
 let imgMap;
 const planeImgPath = 'plane.png'
 let imgPlane;
@@ -32,9 +35,19 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(800, 800);
+  createCanvas(1500, 1728);
   
   imgMap.loadPixels();
+  
+  
+  vid = createVideo(['vid.mov']);
+  vid.loop();
+  vid.hide();
+}
+
+
+function mousePressed() {
+  vid.loop(); // set the video to loop and start playing
 }
 
 const renderOscilloscope = () => {
@@ -50,22 +63,24 @@ const renderScreen = () => {
 
   const vals = calcWave(sin, modFreq, amp1);
   const valsCos = calcWave(cos, modFreq2, amp2);
+  const valsCos1 = calcWave(cos, modFreq, amp2 / 5);
   renderWave(vals, 8);
   renderWave(valsCos, 8);
+  renderWave(valsCos1, 8);
   push()
-  translate(-300,0)
+  translate(-500,0)
   renderWaveParametric(vals, valsCos, 8);  
   pop()
   // renderWaveParametric(vals, valsCos);  
 }
 
 
-const renderTarget = () => {
+const renderTarget = (is_rendered) => {
   let x = map(
-    noise(frameCount * 0.0005), 0, 1, 100, 1000
+    noise(frameCount * 0.002), 0, 1, 400, width - 400
   );
   let y = map(
-    noise(frameCount * 0.0004), 0, 1, 100, 600
+    noise(frameCount * 0.001), 0, 1, 400, height - 400
   );
   
   
@@ -86,8 +101,10 @@ const renderTarget = () => {
   
   
   
-  imgPlane.resize(50, 0);
+  imgPlane.resize(30, 0);
+  if (is_rendered) {
   image(imgPlane, x -25, y - 25);
+  }
 
   // ellipse(x, y, 10, 10);
   return [round(x),y]
@@ -98,32 +115,36 @@ function draw() {
   
   background(0)
   push()
-  scale(0.70)
-  image(imgMap, 90, 90);
+  scale(2.1)
+  image(imgMap, 0, 0);
   pop()
   
-  let tarVals = renderTarget();
-  // console.log(tarVals[0])
-  // console.log(imgMap.pixels[4 * tarVals[0]])
+  
+  push()
+  let tarVals = renderTarget(false);
   let resVal = imgMap.pixels[4 * tarVals[0]];
   let resVal2 = imgMap.pixels[2 * tarVals[0]];  
   amp1 = map(resVal, 0, 255, 10, 300);
   amp2 = resVal2;
-  // amp2 = map(resVal2, 0, 255, 10, 300);
-  // console.log(amp1, amp2)
-  // angularSpeed = map(resVal2, 0, 255, 0.001, 0.1)
+  pop()
   
   push()
-  translate(width * 0.665, 60 )
-  scale(0.5)
+  translate(width * 0.26, height * 0.2 )
+  scale(1)
   renderOscilloscope()
   pop()
 
   push()
-  translate(width * 0.7, 70 )
-  scale(0.2)
+  translate(width * 0.3, height * 0.06 )
+  scale(0.45)
   renderScreen()
   pop()
+  
+//   push()
+//   translate(width * 0.4, height * 0.45)
+//   scale(0.7)
+//   image(vid, 0, 0);
+//   pop()
   
 
   
